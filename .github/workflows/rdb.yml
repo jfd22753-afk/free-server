@@ -1,9 +1,19 @@
-- name: Download ngrok
-  run: |
-    Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-    Expand-Archive ngrok.zip -Force
+name: RDP
 
-    $ngrokPath = ".\ngrok-stable-windows-amd64\ngrok.exe"
-    dir
+on:
+  workflow_dispatch:
 
-    & $ngrokPath authtoken $env:NGROK_AUTH_TOKEN
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Download ngrok
+        run: |
+          Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive ngrok.zip -Force
+
+          $ngrokPath = ".\ngrok-stable-windows-amd64\ngrok.exe"
+          dir
+
+          & $ngrokPath authtoken $env:NGROK_AUTH_TOKEN
