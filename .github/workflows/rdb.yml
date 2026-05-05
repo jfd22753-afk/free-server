@@ -8,16 +8,16 @@ jobs:
 
     steps:
       - name: Set random password
-        id: pass
         run: |
           $pass = "User@" + (Get-Random -Minimum 10000 -Maximum 99999)
           echo "PASSWORD=$pass" >> $env:GITHUB_ENV
 
-      - name: Download ngrok
+      - name: Download & Setup ngrok
         run: |
           Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip
-          ./ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
+          Expand-Archive ngrok.zip -Force
+          Move-Item .\ngrok-stable-windows-amd64\ngrok.exe .
+          .\ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
 
       - name: Enable RDP
         run: |
@@ -26,25 +26,26 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-      - name: Start ngrok tunnel
+      - name: Start ngrok
         run: |
           Start-Process -NoNewWindow -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
 
-      - name: Get ngrok info
+      - name: Show RDP Info
         run: |
           Start-Sleep -Seconds 10
           $tunnel = Invoke-RestMethod http://127.0.0.1:4040/api/tunnels
-          $addr = $tunnel.tunnels[0].public_url
+          $url = $tunnel.tunnels[0].public_url
+
           echo "============================="
           echo "RDP LOGIN INFO 🚀"
-          echo "Address: $addr"
+          echo "Address: $url"
           echo "Username: runneradmin"
           echo "Password: $env:PASSWORD"
           echo "============================="
 
-      - name: Keep session alive
+      - name: Keep Alive
         run: |
-          for ($i=0; $i -lt 6; $i++) {
-            echo "Session running... $i"
-            Start-Sleep -Seconds 600
+          while ($true) {
+            Start-Sleep -Seconds 300
+            echo "Still running..."
           }
