@@ -16,7 +16,8 @@ jobs:
         run: |
           Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive ngrok.zip -Force
-          Move-Item .\ngrok-stable-windows-amd64\ngrok.exe .
+          Copy-Item ".\ngrok-stable-windows-amd64\ngrok.exe" -Destination ".\ngrok.exe"
+          dir
           .\ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
 
       - name: Enable RDP
@@ -28,24 +29,23 @@ jobs:
 
       - name: Start ngrok
         run: |
-          Start-Process -NoNewWindow -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
+          Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
 
-      - name: Show RDP Info
+      - name: Show Info
         run: |
           Start-Sleep -Seconds 10
-          $tunnel = Invoke-RestMethod http://127.0.0.1:4040/api/tunnels
-          $url = $tunnel.tunnels[0].public_url
+          Invoke-RestMethod http://127.0.0.1:4040/api/tunnels | ConvertTo-Json
+          $tunnel = (Invoke-RestMethod http://127.0.0.1:4040/api/tunnels).tunnels[0].public_url
 
-          echo "============================="
-          echo "RDP LOGIN INFO 🚀"
-          echo "Address: $url"
-          echo "Username: runneradmin"
-          echo "Password: $env:PASSWORD"
-          echo "============================="
+          echo "===================="
+          echo "RDP LOGIN"
+          echo "Address: $tunnel"
+          echo "User: runneradmin"
+          echo "Pass: $env:PASSWORD"
+          echo "===================="
 
       - name: Keep Alive
         run: |
           while ($true) {
             Start-Sleep -Seconds 300
-            echo "Still running..."
           }
