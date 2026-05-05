@@ -1,42 +1,9 @@
-name: RDP
+- name: Download ngrok
+  run: |
+    Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+    Expand-Archive ngrok.zip -Force
 
-on:
-  workflow_dispatch:
+    $ngrokPath = ".\ngrok-stable-windows-amd64\ngrok.exe"
+    dir
 
-jobs:
-  build:
-    runs-on: windows-latest
-
-    steps:
-      - name: Setup password
-        run: |
-          $pass = "User@" + (Get-Random -Minimum 10000 -Maximum 99999)
-          echo "PASSWORD=$pass" >> $env:GITHUB_ENV
-
-      - name: Download ngrok
-        run: |
-          Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -Force
-          & ".\ngrok-stable-windows-amd64\ngrok.exe" authtoken $env:NGROK_AUTH_TOKEN
-
-      - name: Enable RDP
-        run: |
-          net user runneradmin $env:PASSWORD
-          net localgroup administrators runneradmin /add
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-      - name: Start ngrok
-        run: |
-          Start-Process ".\ngrok-stable-windows-amd64\ngrok.exe" -ArgumentList "tcp 3389"
-
-      - name: Show info
-        run: |
-          Start-Sleep -Seconds 10
-          $url = (Invoke-RestMethod http://127.0.0.1:4040/api/tunnels).tunnels[0].public_url
-          echo "RDP: $url"
-          echo "User: runneradmin"
-          echo "Pass: $env:PASSWORD"
-
-      - name: Keep alive
-        run: while ($true) { Start-Sleep 300 }
+    & $ngrokPath authtoken $env:NGROK_AUTH_TOKEN
